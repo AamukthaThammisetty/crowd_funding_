@@ -8,6 +8,10 @@ import { Search, Info, Calendar } from 'lucide-react'
 import Link from 'next/link'
 import { useActiveAccount } from 'thirdweb/react'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
+import { Separator } from '@/components/ui/separator'
 
 interface Campaign {
   pId: number
@@ -135,21 +139,74 @@ export default function Home() {
 
             <div className="space-y-4">
               {filteredCampaigns.map((campaign) => {
-                const registrationDate = new Date(Number(campaign.deadline) * 1000)
+                const deadlineDate = new Date(Number(campaign.deadline) * 1000)
                 const isSelected = selectedCampaign?.pId === campaign.pId
+
+                // Calculate progress percentage
+                const target = Number(formatEther(campaign.target))
+                const collected = Number(formatEther(campaign.amountCollected))
+                const progressPercentage = target > 0 ? Math.min((collected / target) * 100, 100) : 0
+
+                // Calculate days left
+                const now = new Date()
+                const daysLeft = Math.max(0, Math.ceil((deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+                const isActive = deadlineDate > now
+
                 return (
-                  <div key={campaign.pId} className={`bg-white border rounded-lg p-4 transition-all ${isSelected ? 'border-blue-500' : 'border-gray-200 hover:border-gray-300'}`}>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-1">{campaign.title}</h3>
-                        <div className="text-sm text-gray-500 mb-2">Registered: {registrationDate.toLocaleDateString()}</div>
-                        <p className="text-gray-600 text-sm line-clamp-2">{campaign.description}</p>
+                  <Card key={campaign.pId} className={`overflow-hidden transition-all ${isSelected ? 'ring-2 ring-primary border-primary' : ''}`}>
+                    <div className="relative">
+                      <img src={campaign.image} alt={campaign.title} className="w-full h-48 object-cover" />
+                      <div className="absolute top-3 right-3">
+                        <Badge variant={isActive ? 'default' : 'secondary'}>{isActive ? 'Active' : 'Ended'}</Badge>
                       </div>
-                      <Button onClick={() => setSelectedCampaign(campaign)} variant={isSelected ? 'default' : 'outline'} className="px-4">
-                        {isSelected ? 'Selected' : 'Select Campaign'}
-                      </Button>
                     </div>
-                  </div>
+
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between items-start gap-2">
+                        <h3 className="text-lg text-blue-950 font-bold line-clamp-1">{campaign.title}</h3>
+                        <Button onClick={() => setSelectedCampaign(campaign)} variant="default" className="bg-blue-950 text-white" size="sm" disabled={isSelected}>
+                          {isSelected ? 'Selected' : 'Select'}
+                        </Button>
+                      </div>
+                      <p className="text-sm text-gray-600 line-clamp-2">{campaign.description}</p>
+                    </CardHeader>
+
+                    <CardContent className="pb-3">
+                      <div className="space-y-4">
+                        {/* Progress bar */}
+                        <div className="space-y-2">
+                          <Progress value={progressPercentage} className="h-2" />
+                          <div className="flex justify-between text-blue-950 text-xs text-muted-foreground">
+                            <span className="text-blue-950">{progressPercentage.toFixed(1)}% funded</span>
+                            <span className="text-blue-950">
+                              {collected.toFixed(4)} / {target.toFixed(4)} ETH
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+
+                    <Separator />
+
+                    <CardFooter className="py-3">
+                      <div className="grid grid-cols-3 w-full text-center">
+                        <div>
+                          <div className="text-sm text-blue-950 font-medium">{daysLeft}</div>
+                          <div className="text-xs text-gray-600">Days left</div>
+                        </div>
+
+                        <div className="border-l border-r border-border px-2">
+                          <div className="text-sm text-blue-950 font-medium">{deadlineDate.toLocaleDateString()}</div>
+                          <div className="text-xs text-gray-600">Deadline</div>
+                        </div>
+
+                        <div>
+                          <div className="text-sm text-blue-950 font-medium">{campaign.donations?.length || 0}</div>
+                          <div className="text-xs text-gray-600">Donors</div>
+                        </div>
+                      </div>
+                    </CardFooter>
+                  </Card>
                 )
               })}
 
@@ -162,7 +219,7 @@ export default function Home() {
           </div>
 
           {/* Right Section - Donation Form */}
-          {selectedCampaign && (
+          {selectedCampaign ? (
             <div className="lg:w-[400px]">
               <div className="bg-white border border-gray-200 rounded-lg p-6 sticky top-8">
                 <h2 className="text-xl font-semibold text-gray-900 mb-2">Make a Donation</h2>
@@ -187,9 +244,44 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <Button onClick={handleDonate} disabled={!account || isDonating || !amount || Number(amount) <= 0} className="w-full">
+                  <Button className="bg-blue-950 w-full text-white" onClick={handleDonate} disabled={!account || isDonating || !amount || Number(amount) <= 0}>
                     {isDonating ? 'Processing...' : 'Donate Now'}
                   </Button>
+
+                  {!account && <p className="text-sm text-center text-gray-500">Please connect your wallet to make a donation</p>}
+
+                  <div className="border-t border-gray-200 pt-6">
+                    <h3 className="text-sm font-medium text-gray-900 mb-4">Why donate through our platform?</h3>
+                    <ul className="space-y-3">
+                      <li className="flex items-start">
+                        <span className="text-sm text-gray-600">• 100% of your donation goes directly to the Campaign</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-sm text-gray-600">• Transparent tracking of funds via blockchain</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-sm text-gray-600">• Secure and immediate fund transfer</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="lg:w-[400px]">
+              <div className="bg-white border border-gray-200 rounded-lg p-6 sticky top-8">
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">Make a Donation</h2>
+                <p className="text-gray-600 text-sm mb-6">Support campaigns with your contribution</p>
+
+                <div className="space-y-6">
+                  <div>
+                    <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-2">
+                      Donation Amount (ETH)
+                    </label>
+                    <div className="mt-1">
+                      <p className="text-gray-600 text-sm mb-6">Select a campaign to make a donation</p>
+                    </div>
+                  </div>
 
                   {!account && <p className="text-sm text-center text-gray-500">Please connect your wallet to make a donation</p>}
 
