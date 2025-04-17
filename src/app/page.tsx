@@ -132,7 +132,7 @@ export default function Home() {
                   placeholder="Search Campaigns by name or description..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 text-gray-900 placeholder-gray-500"
+                  className="w-full text-blue-950 pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none "
                 />
               </div>
             </div>
@@ -239,7 +239,7 @@ export default function Home() {
                         min="0.001"
                         step="0.001"
                         placeholder="0.00"
-                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-blue-950"
                       />
                     </div>
                   </div>
